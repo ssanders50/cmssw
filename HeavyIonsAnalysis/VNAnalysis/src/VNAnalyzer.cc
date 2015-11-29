@@ -250,7 +250,7 @@ VNAnalyzer::VNAnalyzer(const edm::ParameterSet& iConfig):runno_(0)
   FirstEvent_ = kTRUE;
 
   for(int i = 0; i<NumEPNames; i++) {
-    epang[i] = 0;
+    epang[i] = -10;
     epsin[i] = 0;
     epcos[i] = 0;
     qx[i] = 0;
@@ -429,21 +429,15 @@ VNAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   //
   //int bin = 0;
   int Noff=0;
-  if(Noffmin_>=0) {
-    iEvent.getByToken(centralityToken, centrality_);
-    int Noff = centrality_->Ntracks();
-    ntrkval = Noff;
-    if ( (Noff < Noffmin_) or (Noff >= Noffmax_) ) {
-      return;
-    }
-  }
-  hNtrkoff->Fill(Noff);
 
   iEvent.getByToken(centralityBinToken, cbin_);
   int cbin = *cbin_;
   //bin = cbin/CentBinCompression_; 
   double cscale = 100./nCentBins_;
   centval = cscale*cbin;
+
+  Noff = getNoff( iEvent, iSetup,centval);
+  hNtrkoff->Fill(Noff);
 
   hcent->Fill(centval);
   hcentbins->Fill(cbin);
@@ -477,19 +471,20 @@ VNAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       cout<<"EP inconsistency found. Abort."<<endl;
       return;
     }
-    epang[indx]=rp->angle();
-    epsin[indx] = rp->sumSin();
-    epcos[indx] = rp->sumCos();
-
-    qx[indx]  = rp->qx(); 
-    qy[indx]  = rp->qy();
-    q[indx]   = rp->q();
-    vn[indx] = rp->vn(0);
-    epmult[indx] = (double) rp->mult();
-
-    rescor[indx] = flat[indx]->getCentRes1((int) centval);
-    rescorErr[indx] = flat[indx]->getCentResErr1((int) centval);
-
+    if(rp->sumSin()!=0 || rp->sumCos()!=0) {
+      epang[indx]=rp->angle();
+      epsin[indx] = rp->sumSin();
+      epcos[indx] = rp->sumCos();
+      
+      qx[indx]  = rp->qx(); 
+      qy[indx]  = rp->qy();
+      q[indx]   = rp->q();
+      vn[indx] = rp->vn(0);
+      epmult[indx] = (double) rp->mult();
+      
+      rescor[indx] = flat[indx]->getCentRes1((int) centval);
+      rescorErr[indx] = flat[indx]->getCentResErr1((int) centval);
+    }
     ++indx; 
   }
 
