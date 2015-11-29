@@ -131,6 +131,7 @@ private:
   int Noff;
 
   Double_t epang[NumEPNames];
+  Double_t eporig[NumEPNames];
   Double_t epsin[NumEPNames];
   Double_t epcos[NumEPNames];
 
@@ -251,6 +252,7 @@ VNAnalyzer::VNAnalyzer(const edm::ParameterSet& iConfig):runno_(0)
 
   for(int i = 0; i<NumEPNames; i++) {
     epang[i] = -10;
+    eporig[i] = -10;
     epsin[i] = 0;
     epcos[i] = 0;
     qx[i] = 0;
@@ -341,6 +343,7 @@ VNAnalyzer::VNAnalyzer(const edm::ParameterSet& iConfig):runno_(0)
   tree->Branch("NtrkOff",&Noff,"Noff/I");
   tree->Branch("Vtx",&vtx,"vtx/D");
   tree->Branch("epang",&epang, epnames.Data());
+  tree->Branch("eporig",&eporig, epnames.Data());
   tree->Branch("qx",      &qx,       epnames.Data());
   tree->Branch("qy",      &qy,       epnames.Data());
   tree->Branch("q",       &q,       epnames.Data());
@@ -473,6 +476,7 @@ VNAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
     if(rp->sumSin()!=0 || rp->sumCos()!=0) {
       epang[indx]=rp->angle();
+      eporig[indx]=rp->angle(0);
       epsin[indx] = rp->sumSin();
       epcos[indx] = rp->sumCos();
       
