@@ -121,13 +121,13 @@ void EPCalib(){
   save = fopen("save","wb");
   int Hbins = 0;
   int Obins = 0;
-  char buf[100];
+  char buf[200];
   FILE * list;
   list = fopen("tmp.lis","r");
-  TString fnames[200];
+  TString fnames[1000];
   memset(buf,0,sizeof(buf));
   int lcnt = 0;
-  while(fgets(buf,100,list)!=NULL) {
+  while(fgets(buf,200,list)!=NULL) {
     buf[strlen(buf)-1]=0;
     fnames[lcnt] = buf;
     memset(buf,0,sizeof(buf));

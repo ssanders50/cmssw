@@ -58,10 +58,11 @@ using namespace std;
 #include "RecoHI/HiEvtPlaneAlgos/interface/LoadEPDB.h"
 using namespace hi;
 
-static const int nptbinsDefault = 16;
+static const int nptbinsDefault = 24;
 static const double ptbinsDefault[]={
   0.2,  0.3,  0.4,  0.5,  0.6,  0.8,  1.0,  1.2,  1.6,  2.0,
-  2.5,  3.0,  3.5,  4.0,  5.0,  6.0,  8.0};
+  2.5,  3.0,  3.5,  4.0,  5.0,  6.0,  8.0, 
+  10.0, 14.0, 20.0, 30.0, 40.0, 50.0, 70.0, 100.};
 static const int netabinsDefault = 12;
 static const double etabinsDefault[]={-2.4, -2.0, -1.6, -1.2,
 				      -0.8, -0.4, 0.0,  0.4,  0.8,
