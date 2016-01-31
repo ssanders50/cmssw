@@ -224,14 +224,14 @@ CheckFlattening::CheckFlattening(const edm::ParameterSet& iConfig):runno_(0)
   inputPlanesTag_ = iConfig.getParameter<edm::InputTag>("inputPlanesTag_");
   inputPlanesToken = consumes<reco::EvtPlaneCollection>(inputPlanesTag_);
 
-  FlatOrder_ = iConfig.getUntrackedParameter<int>("FlatOrder_", 9);
-  NumFlatBins_ = iConfig.getUntrackedParameter<int>("NumFlatBins_",20);
-  CentBinCompression_ = iConfig.getUntrackedParameter<int>("CentBinCompression_",5);
-  caloCentRef_ = iConfig.getUntrackedParameter<double>("caloCentRef_",80.);
-  caloCentRefWidth_ = iConfig.getUntrackedParameter<double>("caloCentRefWidth_",5.);
+  FlatOrder_ = iConfig.getParameter<int>("FlatOrder_");
+  NumFlatBins_ = iConfig.getParameter<int>("NumFlatBins_");
+  CentBinCompression_ = iConfig.getParameter<int>("CentBinCompression_");
+  caloCentRef_ = iConfig.getParameter<double>("caloCentRef_");
+  caloCentRefWidth_ = iConfig.getParameter<double>("caloCentRefWidth_");
 
-  Noffmin_ = iConfig.getUntrackedParameter<int>("Noffmin_", 0);
-  Noffmax_ = iConfig.getUntrackedParameter<int>("Noffmax_", 50000);	
+  Noffmin_ = iConfig.getParameter<int>("Noffmin_");
+  Noffmax_ = iConfig.getParameter<int>("Noffmax_");	
   hNtrkoff = fs->make<TH1D>("Ntrkoff","Ntrkoff",1001,0,3000);
 
   Branch_Cent = iConfig.getUntrackedParameter<bool>("Branch_Cent",true);

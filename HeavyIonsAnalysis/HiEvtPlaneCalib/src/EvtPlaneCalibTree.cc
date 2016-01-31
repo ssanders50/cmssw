@@ -131,6 +131,7 @@ private:
   uint runno_; 
   float centval;
   int bin;
+  int cbin;
   uint ntrkval;
   float vtx;
   double caloCentRef_;
@@ -282,6 +283,7 @@ EvtPlaneCalibTree::EvtPlaneCalibTree(const edm::ParameterSet& iConfig) {
   tree->Branch("Vtx",     &vtx,        "vtx/F");
   tree->Branch("Run",     &runno_,     "run/i");
   tree->Branch("bin",     &bin,        "bin/I");
+  tree->Branch("cbin",     &cbin,        "cbin/I");
   tree->Branch("NtrkOff",&ntrkval,     "ntrkoff/i");
   tree->Branch("ws", &ws, epnamesF.Data());
   tree->Branch("wc", &wc, epnamesF.Data());
@@ -339,7 +341,7 @@ EvtPlaneCalibTree::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
   //
   
   iEvent.getByToken(centralityBinToken, cbin_);
-  int cbin = *cbin_;
+  cbin = *cbin_;
   bin = cbin/CentBinCompression_; 
   
   double cscale = 100./nCentBins_;
