@@ -39,7 +39,7 @@ process.source = cms.Source("PoolSource",
        'root://cmsxrootd.fnal.gov//store/hidata/HIRun2015/HIMinimumBias3/AOD/PromptReco-v1/000/263/211/00000/4A4D7A06-31A7-E511-BD16-02163E011936.root',
        'root://cmsxrootd.fnal.gov//store/hidata/HIRun2015/HIMinimumBias3/AOD/PromptReco-v1/000/263/212/00000/0E6B670A-31A7-E511-A765-02163E014153.root',
        'root://cmsxrootd.fnal.gov//store/hidata/HIRun2015/HIMinimumBias3/AOD/PromptReco-v1/000/263/212/00000/A2B5C70C-31A7-E511-B489-02163E014667.root',
-       'root://cmsxrootd.fnal.gov//store/hidata/HIRun2015/HIMinimumBias3/AOD/PromptReco-v1/000/263/213/00000/528B1E2F-32A7-E511-A3EC-02163E0122F8.root',
+       'root://cmsxrootd.fnal.gov//store/hidata/HIRun2015/HIMinimumBias3/AOD/PromptReco-v1/000/263/213/00000/528B1E2F-32A7-E511-A3EC-02163E0122F8.root'
         ),
                             duplicateCheckMode = cms.untracked.string("noDuplicateCheck"),
                             inputCommands=cms.untracked.vstring(

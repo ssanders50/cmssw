@@ -10,10 +10,12 @@ process.load("HeavyIonsAnalysis.HiEvtPlaneCalib/evtplanecalibtree_cfi")
 process.load("RecoHI.HiCentralityAlgos.CentralityBin_cfi")
 process.load("CondCore.DBCommon.CondDBCommon_cfi")
 process.load('GeneratorInterface.HiGenCommon.HeavyIon_cff')
-process.load("CondCore.DBCommon.CondDBCommon_cfi")
+process.load("HeavyIonsAnalysis.Configuration.hfCoincFilter_cff")
+process.load("HeavyIonsAnalysis.Configuration.analysisFilters_cff")
+process.load("HeavyIonsAnalysis.Configuration.collisionEventSelection_cff")
 
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '75X_mcRun2_HeavyIon_v5', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, '75X_dataRun2_v13', '')
 process.GlobalTag.snapshotTime = cms.string("9999-12-31 23:59:59.000")
 
 process.MessageLogger.cerr.FwkReport.reportEvery=1000
@@ -24,89 +26,23 @@ process.options = cms.untracked.PSet(
     SkipEvent = cms.untracked.vstring('ProductNotFound')
 )
 
+
 process.GlobalTag.toGet.extend([
-   cms.PSet(record = cms.string("HeavyIonRcd"),
-      tag = cms.string("CentralityTable_HFtowers200_HydjetDrum5_v750x02_mc"),
-      connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS"),
-      label = cms.untracked.string("HFtowers")
+   cms.PSet(record = cms.string("HeavyIonRPRcd"),
+      tag = cms.string("HeavyIonRPRcd_75x_v02_offline"),
+      connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
    )
 ])
 
-
 process.source = cms.Source("PoolSource",
                             fileNames = cms.untracked.vstring(
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_1.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_10.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_100.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_101.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_102.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_103.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_104.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_105.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_106.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_107.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_108.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_109.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_11.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_110.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_111.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_112.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_113.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_114.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_115.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_116.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_117.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_118.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_119.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_12.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_120.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_121.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_122.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_123.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_124.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_125.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_126.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_127.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_128.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_129.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_13.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_130.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_131.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_132.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_133.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_134.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_135.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_136.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_137.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_138.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_139.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_14.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_140.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_141.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_142.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_143.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_144.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_145.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_146.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_147.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_148.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_149.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_15.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_150.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_151.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_152.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_153.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_154.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_155.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_156.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_157.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_158.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_159.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_16.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_160.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_161.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_162.root',
-       'root://xrootd.unl.edu//store/user/tuos/HIAOD2015/round3/June01/HydjetMB/Hydjet_Quenched_MinBias_5020GeV/HydjetMB_AOD_750pre5_round3v01/150601_223002/0000/step2_RAW2DIGI_L1Reco_MB_AODSIM_163.root'
+       'root://cmsxrootd.fnal.gov//store/hidata/HIRun2015/HIMinimumBias3/AOD/PromptReco-v1/000/263/155/00000/20B08F97-2EA7-E511-9125-02163E011DBD.root',
+       'root://cmsxrootd.fnal.gov//store/hidata/HIRun2015/HIMinimumBias3/AOD/PromptReco-v1/000/263/156/00000/3ACB059C-2EA7-E511-96A3-02163E011F7E.root',
+       'root://cmsxrootd.fnal.gov//store/hidata/HIRun2015/HIMinimumBias3/AOD/PromptReco-v1/000/263/158/00000/0C292F98-2EA7-E511-A23E-02163E01424C.root',
+       'root://cmsxrootd.fnal.gov//store/hidata/HIRun2015/HIMinimumBias3/AOD/PromptReco-v1/000/263/211/00000/4A4D7A06-31A7-E511-BD16-02163E011936.root',
+       'root://cmsxrootd.fnal.gov//store/hidata/HIRun2015/HIMinimumBias3/AOD/PromptReco-v1/000/263/212/00000/0E6B670A-31A7-E511-A765-02163E014153.root',
+       'root://cmsxrootd.fnal.gov//store/hidata/HIRun2015/HIMinimumBias3/AOD/PromptReco-v1/000/263/212/00000/A2B5C70C-31A7-E511-B489-02163E014667.root',
+       'root://cmsxrootd.fnal.gov//store/hidata/HIRun2015/HIMinimumBias3/AOD/PromptReco-v1/000/263/213/00000/528B1E2F-32A7-E511-A3EC-02163E0122F8.root'
     ),
                             duplicateCheckMode = cms.untracked.string("noDuplicateCheck"),
                             inputCommands=cms.untracked.vstring(
@@ -121,6 +57,12 @@ process.source = cms.Source("PoolSource",
 process.TFileService = cms.Service("TFileService",
     fileName = cms.string("calib.root")
 )
+import HLTrigger.HLTfilters.hltHighLevel_cfi
+process.minBias = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
+process.minBias.HLTPaths = [
+                "HLT_HIL1MinimumBiasHF1AND_*",
+                "HLT_HIL1MinimumBiasHF2AND_*"
+]
 
 process.centralityBin.Centrality = cms.InputTag("hiCentrality")
 process.centralityBin.centralityVariable = cms.string("HFtowers")
@@ -130,7 +72,7 @@ process.hiEvtPlane.loadDB_ = cms.untracked.bool(False)
 process.dump = cms.EDAnalyzer("EventContentAnalyzer")
 
 
-process.p = cms.Path(process.centralityBin*process.hiEvtPlane*process.evtPlaneCalibTree)
+process.p = cms.Path(process.minBias*process.hfCoincFilter3*process.primaryVertexFilter*process.centralityBin*process.hiEvtPlane*process.evtPlaneCalibTree)
 
 
                         
