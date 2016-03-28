@@ -7,6 +7,7 @@
 
 // system include files
 #include <memory>
+#include <algorithm>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -25,6 +26,8 @@
 #include "DataFormats/HeavyIonEvent/interface/EvtPlane.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include <DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h>
+#include <DataFormats/ParticleFlowCandidate/interface/PFCandidate.h>
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
@@ -58,15 +61,28 @@ using namespace std;
 #include "RecoHI/HiEvtPlaneAlgos/interface/LoadEPDB.h"
 using namespace hi;
 
-static const int nptbinsDefault = 24;
-static const double ptbinsDefault[]={
-  0.2,  0.3,  0.4,  0.5,  0.6,  0.8,  1.0,  1.2,  1.6,  2.0,
-  2.5,  3.0,  3.5,  4.0,  5.0,  6.0,  8.0, 
-  10.0, 14.0, 20.0, 30.0, 40.0, 50.0, 70.0, 100.};
-static const int netabinsDefault = 12;
-static const double etabinsDefault[]={-2.4, -2.0, -1.6, -1.2,
-				      -0.8, -0.4, 0.0,  0.4,  0.8,
-				      1.2,  1.6,  2.0,  2.4};
+static const int nptbinsDefault = 9;
+static const double ptbinsDefault[]={12.0, 14.0, 20.0, 26.0, 35.0, 45.0, 60.0, 80.0, 100., 200.};
+//  0.2,  0.3,  0.4,  0.5,  0.6,  0.8,  1.0,  1.2,  1.6,  2.0,
+//  2.5,  3.0,  3.5,  4.0,  5.0,  6.0,  8.0, 
+//  10.0, 14.0, 20.0, 30.0, 40.0, 50.0, 70.0, 100.};
+
+static const int nptbinsMBDefault = 18;
+static const double ptbinsMBDefault[]={0.5,  0.6,  0.8,  1.0,  1.25,  1.50,  2.0,
+				       2.5,  3.0,  3.5,  4.0,  5.0,  6.0,  7.0, 8.0, 
+					10.0, 12.,14.0, 20.};
+
+
+//static const int nptbinsDefault = 24;
+//static const double ptbinsDefault[]={0.6,0.8,
+//  1.00, 1.25, 1.50, 2.00, 2.50, 3.00, 3.50, 4.00, 5.00, 6.00, 7.00, 8.00, 10.0, 12.0, 14.0, 20.0, 26.0, 35.0, 45.0, 60.0, 80.0, 100., 200.};
+//  0.2,  0.3,  0.4,  0.5,  0.6,  0.8,  1.0,  1.2,  1.6,  2.0,
+//  2.5,  3.0,  3.5,  4.0,  5.0,  6.0,  8.0, 
+//  10.0, 14.0, 20.0, 30.0, 40.0, 50.0, 70.0, 100.};
+static const int netabinsDefault = 4;
+static const double etabinsDefault[]={-2.0, -1.0,
+				      0.0,  1.0,
+				      2.0};
 
 
 //
@@ -82,6 +98,7 @@ private:
   virtual void beginJob() ;
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
   virtual void endJob() ;
+  bool CaloMatch(const reco::Track & track, const edm::Event & iEvent, unsigned int idx);
   // ----------member data ---------------------------
   int eporder_;
 
@@ -97,6 +114,10 @@ private:
   edm::InputTag centralityTag_;
   edm::EDGetTokenT<reco::Centrality> centralityToken;
   edm::Handle<reco::Centrality> centrality_;
+
+  edm::InputTag pfTag_;
+  edm::EDGetTokenT<reco::PFCandidateCollection> pfToken_;
+
 
   edm::InputTag vertexTag_;
   edm::EDGetTokenT<std::vector<reco::Vertex>> vertexToken;
@@ -124,12 +145,24 @@ private:
   float vzErr_sell;
   TH1D * hcent;
   TH1D * hcentbins;
+  TH1D * hptNtrk;
+  TH1D * hptNtrkGood;
+  TH1I * hNtrkRet;
   TH2D * hEff[10];
   TH2D * hw[10];
   double centval;
   double ntrkval;
   double vtx;
   int Noff;
+  double reso_;
+  bool bCaloMatching_;
+  int nvtx_;
+  double minvz_;
+  double maxvz_;
+
+  double dzdzerror_;
+  double d0d0error_;
+  double pterror_;
 
   Double_t epang[NumEPNames];
   Double_t eporig[NumEPNames];
@@ -172,6 +205,7 @@ private:
   HiEvtPlaneFlatten * flat[NumEPNames];
   bool loadDB_;
   bool FirstEvent_;
+  bool MB_;
 
   int getNoff(const edm::Event& iEvent, const edm::EventSetup& iSetup, double cent)
   {
@@ -196,9 +230,7 @@ private:
     double vyError = (*recoVertices)[primaryvtx].yError();
     double vzError = (*recoVertices)[primaryvtx].zError();
     iEvent.getByLabel(trackTag_,trackCollection_);
-    for(TrackCollection::const_iterator itTrack = trackCollection_->begin();
-	itTrack != trackCollection_->end();                      
-	++itTrack) {    
+    for(TrackCollection::const_iterator itTrack = trackCollection_->begin(); itTrack != trackCollection_->end(); ++itTrack) {    
       if ( !itTrack->quality(reco::TrackBase::highPurity) ) continue;
       if ( itTrack->charge() == 0 ) continue;
       double d0 = -1.* itTrack->dxy(v1);
@@ -209,7 +241,58 @@ private:
       if ( fabs( dz/dzerror ) > 3. ) continue;
       if ( fabs( d0/derror ) > 3. ) continue;
       if ( itTrack->ptError()/itTrack->pt() > 0.1 ) continue;
+      if ( itTrack->pt() < 0.4 ) continue;
+      if(itTrack->eta()<1&&cent>=0&&cent<5) hptNtrk->Fill(itTrack->pt());
+      Noff++;
+    }
+    if(Noff < Noffmin_ || Noff > Noffmax_) return -2;
 
+    //Noff done.  Now apply tighter cuts.  
+    //Return -3 nvtx_ failed
+    //Return -4 minvz_ or maxvz_ failed
+    //Return -5 vtx track size
+    
+
+    VertexCollection recoV = *vertex_;
+
+    if ( (int) recoV.size() > nvtx_ ) return -3;
+    //sort( recoV.begin(), recoV.end(), [](const reco::Vertex &a, const reco::Vertex &b){
+    //	if ( a.tracksSize() == b.tracksSize() ) return a.chi2() < b.chi2() ? true:false;
+    //	return a.tracksSize() > b.tracksSize() ? true:false;
+    //  });
+    
+    primaryvtx = 0;
+    math::XYZPoint vv1( recoV[primaryvtx].position().x(), recoV[primaryvtx].position().y(), recoV[primaryvtx].position().z() );
+    vxError = recoV[primaryvtx].xError();
+    vyError = recoV[primaryvtx].yError();
+    vzError = recoV[primaryvtx].zError();
+    
+    double vz = recoV[primaryvtx].z();
+    if (vz < minvz_ || vz > maxvz_) {
+      //cout << __LINE__ << " vz = " << vz << endl;
+      return -4;
+    }
+    if(recoV[primaryvtx].tracksSize() < 1) {
+      return -5;
+    }
+    for(TrackCollection::const_iterator itTrack = trackCollection_->begin(); itTrack != trackCollection_->end(); ++itTrack) {    
+      if ( !itTrack->quality(reco::TrackBase::highPurity) )  continue;
+      if ( itTrack->charge() == 0 ) continue;
+      double d0 = -1.* itTrack->dxy(vv1);
+      double derror=sqrt(itTrack->dxyError()*itTrack->dxyError()+vxError*vyError);
+      double dz=itTrack->dz(vv1);
+      double dzerror=sqrt(itTrack->dzError()*itTrack->dzError()+vzError*vzError);
+      if ( fabs(itTrack->eta()) > 2.4 ) continue;
+      if ( fabs( dz/dzerror ) > dzdzerror_ ) continue;
+      if ( fabs( d0/derror ) > d0d0error_ ) continue;
+      if ( fabs(itTrack->ptError())/itTrack->pt() > pterror_ ) continue;
+
+      if ( itTrack->numberOfValidHits() < 11 ) continue;
+      double algoOffline = itTrack->algo();
+      if(!(algoOffline==4 || algoOffline==6 || algoOffline==7 || algoOffline==5 || algoOffline==11)) continue;      
+      if ( itTrack->normalizedChi2() / itTrack->hitPattern().trackerLayersWithMeasurement() > 0.15 ) continue;
+      if (!CaloMatch(*itTrack, iEvent, itTrack - trackCollection_->begin()) ) continue;
+      if(itTrack->eta()<1&&cent>=0&&cent<5&&itTrack->pt()>0.4) hptNtrkGood->Fill(itTrack->pt());
       qxtrk->Fill(itTrack->pt(), itTrack->eta(), TMath::Cos(EPOrder_*itTrack->phi()));
       qytrk->Fill(itTrack->pt(), itTrack->eta(), TMath::Sin(EPOrder_*itTrack->phi()));
       qcnt->Fill(itTrack->pt(), itTrack->eta());
@@ -227,13 +310,10 @@ private:
 
 	}
       }
-      if ( itTrack->pt() < 0.4 ) continue;
-      Noff++;
       if( itTrack->pt() < 0.5 ) continue;
       if(!teff) hEff[(int)(cent/10.)]->Fill(itTrack->phi(),itTrack->eta());
     }
 
-    if(Noff < Noffmin_ || Noff > Noffmax_) return -2;
     return Noff;
   }
 
@@ -250,7 +330,6 @@ VNAnalyzer::VNAnalyzer(const edm::ParameterSet& iConfig):runno_(0)
   runno_ = 0;
   loadDB_ = kTRUE;
   FirstEvent_ = kTRUE;
-
   for(int i = 0; i<NumEPNames; i++) {
     epang[i] = -10;
     eporig[i] = -10;
@@ -282,6 +361,8 @@ VNAnalyzer::VNAnalyzer(const edm::ParameterSet& iConfig):runno_(0)
   trackTag_ = iConfig.getParameter<edm::InputTag>("trackTag_");
   trackToken = consumes<reco::TrackCollection>(trackTag_);
 
+
+
   inputPlanesTag_ = iConfig.getParameter<edm::InputTag>("inputPlanesTag_");
   inputPlanesToken = consumes<reco::EvtPlaneCollection>(inputPlanesTag_);
 
@@ -294,25 +375,57 @@ VNAnalyzer::VNAnalyzer(const edm::ParameterSet& iConfig):runno_(0)
   Noffmin_ = iConfig.getUntrackedParameter<int>("Noffmin_", 0);
   Noffmax_ = iConfig.getUntrackedParameter<int>("Noffmax_", 50000);	
   effTable_ = iConfig.getParameter<std::string>("effTable_");
+  bCaloMatching_ = iConfig.getUntrackedParameter<bool>("bCaloMaching", true);
+
+  MB_ = iConfig.getUntrackedParameter<bool>("MB_",true);
+
+  if(bCaloMatching_) {
+  pfTag_ = iConfig.getUntrackedParameter<edm::InputTag>("pfTag");
+  pfToken_ = consumes<reco::PFCandidateCollection>(pfTag_);
+  }
+
+  nvtx_ = iConfig.getUntrackedParameter<int>("nvtx_", 100);
+  reso_ = iConfig.getUntrackedParameter<double>("reso", 0.2);
+  if(reso_<0.01) bCaloMatching_ = false;
+  dzdzerror_ = iConfig.getUntrackedParameter<double>("dzdzerror_", 3.);
+  d0d0error_ = iConfig.getUntrackedParameter<double>("d0d0error_", 3.);
+  pterror_ = iConfig.getUntrackedParameter<double>("pterror_",0.1);
   teff = 0;
   if(!effTable_.empty()) teff = new TrackEfficiency(effTable_.data());
-
+  minvz_ = iConfig.getUntrackedParameter<double>("minvz_", -15.);
+  maxvz_ = iConfig.getUntrackedParameter<double>("maxvz_", 15.);
   hNtrkoff = fs->make<TH1D>("Ntrkoff","Ntrkoff",1001,0,3000);
-  qxtrk = fs->make<TH2D>(Form("qxtrk_v%d",EPOrder_),Form("qxtrk_v%d",EPOrder_),nptbinsDefault,ptbinsDefault, netabinsDefault, etabinsDefault);
-  qytrk = fs->make<TH2D>(Form("qytrk_v%d",EPOrder_),Form("qytrk_v%d",EPOrder_),nptbinsDefault,ptbinsDefault, netabinsDefault, etabinsDefault);
-  qcnt =  fs->make<TH2D>(Form("qcnt_v%d",EPOrder_), Form("qcnt_v%d",EPOrder_),nptbinsDefault,ptbinsDefault, netabinsDefault, etabinsDefault);
-  if(teff) {
-    wqxtrk = fs->make<TH2D>(Form("wqxtrk_v%d",EPOrder_),Form("wqxtrk_v%d",EPOrder_),nptbinsDefault,ptbinsDefault, netabinsDefault, etabinsDefault);
-    wqytrk = fs->make<TH2D>(Form("wqytrk_v%d",EPOrder_),Form("wqytrk_v%d",EPOrder_),nptbinsDefault,ptbinsDefault, netabinsDefault, etabinsDefault);
-    wqcnt =  fs->make<TH2D>(Form("wqcnt_v%d",EPOrder_), Form("wqcnt_v%d",EPOrder_),nptbinsDefault,ptbinsDefault, netabinsDefault, etabinsDefault);
-    weff =  fs->make<TH2D>("weff","weff",nptbinsDefault,ptbinsDefault, netabinsDefault, etabinsDefault);
+  double npt = nptbinsDefault;
+  if(MB_) npt = nptbinsMBDefault;
+  double ptbins[25];
+  for(int i = 0; i<=npt; i++) {
+    if(MB_) {
+      ptbins[i] = ptbinsMBDefault[i];
+    } else {
+      ptbins[i] = ptbinsDefault[i];
+    }
   }
-  avpt =  fs->make<TH2D>("avpt","avpt",nptbinsDefault,ptbinsDefault, netabinsDefault, etabinsDefault);
+  qxtrk = fs->make<TH2D>(Form("qxtrk_v%d",EPOrder_),Form("qxtrk_v%d",EPOrder_),npt,ptbins, netabinsDefault, etabinsDefault);
+  qytrk = fs->make<TH2D>(Form("qytrk_v%d",EPOrder_),Form("qytrk_v%d",EPOrder_),npt,ptbins, netabinsDefault, etabinsDefault);
+  qcnt =  fs->make<TH2D>(Form("qcnt_v%d",EPOrder_), Form("qcnt_v%d",EPOrder_),npt,ptbins, netabinsDefault, etabinsDefault);
+  if(teff) {
+    wqxtrk = fs->make<TH2D>(Form("wqxtrk_v%d",EPOrder_),Form("wqxtrk_v%d",EPOrder_),npt,ptbins, netabinsDefault, etabinsDefault);
+    wqytrk = fs->make<TH2D>(Form("wqytrk_v%d",EPOrder_),Form("wqytrk_v%d",EPOrder_),npt,ptbins, netabinsDefault, etabinsDefault);
+    wqcnt =  fs->make<TH2D>(Form("wqcnt_v%d",EPOrder_), Form("wqcnt_v%d",EPOrder_),npt,ptbins, netabinsDefault, etabinsDefault);
+    weff =  fs->make<TH2D>("weff","weff",npt,ptbins, netabinsDefault, etabinsDefault);
+  }
+  avpt =  fs->make<TH2D>("avpt","avpt",npt,ptbins, netabinsDefault, etabinsDefault);
 
   hcent = fs->make<TH1D>("cent","cent",220,-10,110);
   hcentbins = fs->make<TH1D>("centbins","centbins",201,0,200);
   hrun = fs->make<TH1I>("runs","runs",100000,150001,250000);
-
+  hptNtrk = fs->make<TH1D>("ptNtrk","ptNtrk",npt,ptbins);
+  hptNtrk->SetXTitle("p_{T} (GeV/c)");
+  hptNtrk->SetYTitle("Ntrks (|#eta|<1; 0-5)");
+  hptNtrkGood = fs->make<TH1D>("ptNtrkGood","ptNtrkGood",npt,ptbins);
+  hptNtrkGood->SetXTitle("p_{T} (GeV/c)");
+  hptNtrkGood->SetYTitle("Ntrks (Good) (|#eta|<1; 0-5)");
+  hNtrkRet = fs->make<TH1I>("NtrkRet","NtrkRet", 10,0,10);
   for(int i = 0; i<10; i++) {
     TString hn = Form("Eff_%d_%d",10*i,10*(i+1));
     hEff[i] = fs->make<TH2D>(hn.Data(),hn.Data(),50,-TMath::Pi(),TMath::Pi(),50,-2.4,2.4);
@@ -328,7 +441,12 @@ VNAnalyzer::VNAnalyzer(const edm::ParameterSet& iConfig):runno_(0)
     hw[i]->SetYTitle("#eta");
     hw[i]->SetOption("colz");
   }
-	      
+  cout<<"============================== CUTS ====================================="<<endl;
+  cout<<"dzerror: "<<dzdzerror_<<endl;
+  cout<<"d0error: "<<d0d0error_<<endl;
+  cout<<"pterror: "<<pterror_<<endl;
+  if(bCaloMatching_) cout<<"reso:    "<<reso_<<endl;   
+  cout<<"========================================================================="<<endl;	      
   TString epnames = EPNames[0].data();
   epnames = epnames+"/D";
   for(int i = 0; i<NumEPNames; i++) {
@@ -413,7 +531,6 @@ VNAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	}
       }
     }
-    cout<<"Load flattening parameters"<<endl;
     //
     //Get flattening parameter file.  
     //
@@ -441,8 +558,11 @@ VNAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   centval = cscale*cbin;
 
   Noff = getNoff( iEvent, iSetup,centval);
-  hNtrkoff->Fill(Noff);
-
+  if(Noff<=0) {
+    hNtrkRet->Fill(fabs(Noff));
+  } else {
+    hNtrkoff->Fill(Noff);
+  }
   hcent->Fill(centval);
   hcentbins->Fill(cbin);
   //
@@ -514,6 +634,29 @@ VNAnalyzer::beginJob()
 // ------------ method called once each job just after ending the event loop  ------------
 void 
 VNAnalyzer::endJob() {
+}
+bool
+VNAnalyzer::CaloMatch(const reco::Track & track, const edm::Event & iEvent, unsigned int idx)
+{
+  if ( !bCaloMatching_ ) return true;
+  edm::Handle<reco::PFCandidateCollection> pfCand;
+  iEvent.getByToken( pfToken_, pfCand );
+  double energy = 0;
+  for ( reco::PFCandidateCollection::const_iterator it = pfCand->begin(); it != pfCand->end(); ++it ) {
+    reco::TrackRef trackRef = it->trackRef();
+    if ( !((it->particleId() != reco::PFCandidate::h) ||
+	 (it->particleId() != reco::PFCandidate::e) ||
+	   (it->particleId() != reco::PFCandidate::mu) )) continue;
+    if ( idx == trackRef.key() ) {
+      energy = it->ecalEnergy() + it->hcalEnergy();
+      break;
+    }
+  }
+  
+  if( track.pt() < 20 || ( energy/( track.pt()*TMath::CosH(track.eta() ) ) > reso_ && (energy)/(TMath::CosH(track.eta())) > (track.pt() - 80.0) )  ) return true;
+  else {
+    return false;
+  }
 }
 
 //define this as a plug-in
