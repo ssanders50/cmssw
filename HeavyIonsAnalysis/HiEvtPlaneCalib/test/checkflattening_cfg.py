@@ -23,13 +23,18 @@ process.GlobalTag.snapshotTime = cms.string("9999-12-31 23:59:59.000")
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 process.MessageLogger.cerr.FwkReport.reportEvery=1000
 
+from CondCore.DBCommon.CondDBSetup_cfi import *
 
-process.GlobalTag.toGet.extend([
-   cms.PSet(record = cms.string("HeavyIonRPRcd"),
-      tag = cms.string("HeavyIonRPRcd_75x_v02_offline"),
-      connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
-   )
-])
+process.flatparms = cms.ESSource("PoolDBESSource", CondDBSetup,
+                                 connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS"),
+                                 toGet = cms.VPSet(
+        cms.PSet(
+            record = cms.string("HeavyIonRPRcd"),
+            tag = cms.string("HeavyIonRPRcd_75x_v02_offline"),
+            )
+        )
+)
+process.es_prefer_flatparms = cms.ESPrefer("PoolDBESSource","flatparms")
 
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
@@ -44,6 +49,7 @@ process.source = cms.Source("PoolSource",
                             duplicateCheckMode = cms.untracked.string("noDuplicateCheck"),
                             inputCommands=cms.untracked.vstring(
         'keep *',
+        'drop *_hiEvtPlane_*_*'
         )
 
 )

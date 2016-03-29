@@ -27,13 +27,6 @@ process.options = cms.untracked.PSet(
 )
 
 
-process.GlobalTag.toGet.extend([
-   cms.PSet(record = cms.string("HeavyIonRPRcd"),
-      tag = cms.string("HeavyIonRPRcd_75x_v02_offline"),
-      connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
-   )
-])
-
 process.source = cms.Source("PoolSource",
                             fileNames = cms.untracked.vstring(
        'root://cmsxrootd.fnal.gov//store/hidata/HIRun2015/HIMinimumBias3/AOD/PromptReco-v1/000/263/155/00000/20B08F97-2EA7-E511-9125-02163E011DBD.root',
