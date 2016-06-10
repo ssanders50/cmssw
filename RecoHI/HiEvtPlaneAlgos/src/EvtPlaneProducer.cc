@@ -481,7 +481,7 @@ EvtPlaneProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 		if(MomConsWeight[i][0]=='y' && loadDB_) {
 		  w = flat[i]->getW(track_pt, vzr_sell, bin);
 		}
-		if(track_eta<0) w=-w;
+		if(track_eta<0 && MomConsWeight[i][0]=='n') w=-w;
 	      }
 	      rp[i]->addParticle(w,track_pt,sin(EPOrder[i]*track_phi),cos(EPOrder[i]*track_phi),track_eta);
 	    }
