@@ -143,6 +143,11 @@ _pp_on_AA_2018_extraCommands = [
     'keep recoClusterCompatibility*_hiClusterCompatibility_*_*',
     'keep *_hiCentrality_*_*',
     'keep *_hiFJRhoProducer_*_*',
+    'keep *_hiFJRhoFlowModulationProducer_*_*',
+    'keep *_hiPuRhoProducer_*_*',
+    'keep patJets_patJetsakFlowPuCs*_*_*',
+    'keep *_patJetsakFlowPuCs*_pfCandidates_*',
+    'keep *_patJetsakFlowPuCs*_tagInfos_*',
     'keep *_zdcreco_*_*',
     'keep ZDCDataFramesSorted_hcalDigis_*_*',
     'keep ZDCDataFramesSorted_castorDigis_*_*',
@@ -150,8 +155,21 @@ _pp_on_AA_2018_extraCommands = [
     'keep CrossingFramePlaybackInfoNew_mix_*_*',
     'keep booledmValueMap_*MuonID_*_*',
     'keep patPackedCandidates_hipixeltracks_*_*',
-    #'keep *_heavyIon_*_*',
+    'drop *_slimmedJetsAK8_*_*',
+    'drop *_slimmedJetsAK8PFPuppiSoftDropPacked_SubJets_*',
+    'drop *_slimmedJetsPuppi_*_*',
+    'drop *_slimmedMETsPuppi_*_*',
 ]
+
+_pp_on_AA_2018_extraCommandsGEN = [
+    'keep *_heavyIon_*_*',
+    'keep recoBasicJets_*HiGenJets_*_*',
+    'drop *_slimmedGenJets__*',
+    'drop *_slimmedGenJetsFlavourInfos_*_*',
+    'drop *_slimmedGenJetsAK8__*',
+    'drop *_slimmedGenJetsAK8SoftDropSubJets__*',
+]
+
 from Configuration.Eras.Modifier_pp_on_AA_2018_cff import pp_on_AA_2018
 pp_on_AA_2018.toModify(MicroEventContent, outputCommands = MicroEventContent.outputCommands + _pp_on_AA_2018_extraCommands)
-pp_on_AA_2018.toModify(MicroEventContentMC, outputCommands = MicroEventContentMC.outputCommands + _pp_on_AA_2018_extraCommands + ['keep *_heavyIon_*_*'])
+pp_on_AA_2018.toModify(MicroEventContentMC, outputCommands = MicroEventContentMC.outputCommands + _pp_on_AA_2018_extraCommands + _pp_on_AA_2018_extraCommandsGEN)
