@@ -2,7 +2,7 @@
 //
 // Package:    EvtPlaneProducer
 // Class:      EvtPlaneProducer
-//
+// 
 /**\class EvtPlaneProducer EvtPlaneProducer.cc RecoHI/EvtPlaneProducer/src/EvtPlaneProducer.cc
    
 Description: <one line class summary>
@@ -21,6 +21,7 @@ Implementation:
 #include <iostream>
 #include <ctime>
 #include <cmath>
+#include <cstdlib>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -38,6 +39,7 @@ Implementation:
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidateFwd.h"
 
+
 #include "DataFormats/HcalRecHit/interface/HcalRecHitCollections.h"
 #include "DataFormats/Common/interface/Ref.h"
 
@@ -50,7 +52,6 @@ Implementation:
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
-#include <cstdlib>
 #include "RecoHI/HiEvtPlaneAlgos/interface/HiEvtPlaneList.h"
 #include "CondFormats/HIObjects/interface/RPFlatParams.h"
 #include "CondFormats/DataRecord/interface/HeavyIonRPRcd.h"
@@ -62,8 +63,10 @@ Implementation:
 #include "DataFormats/Common/interface/Ref.h"
 #include "DataFormats/Common/interface/RefVector.h"
 
+#include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 #include "RecoHI/HiEvtPlaneAlgos/interface/HiEvtPlaneFlatten.h"
 #include "RecoHI/HiEvtPlaneAlgos/interface/LoadEPDB.h"
+#include "RecoHI/HiEvtPlaneAlgos/interface/EPCuts.h"
 
 using namespace std;
 using namespace hi;
@@ -75,46 +78,38 @@ using namespace hi;
 namespace hi {
   class GenPlane {
   public:
-    GenPlane(string name, double etaminval1, double etamaxval1, double etaminval2, double etamaxval2, int orderval) {
-      epname = name;
-      etamin1 = etaminval1;
-      etamax1 = etamaxval1;
-      etamin2 = etaminval2;
-      etamax2 = etamaxval2;
-      sumsin = 0;
-      sumcos = 0;
-      sumsinNoWgt = 0;
-      sumcosNoWgt = 0;
+    GenPlane(string name,double etaminval1,double etamaxval1,double etaminval2,double etamaxval2,int orderval){
+      epname=name;
+      etamin1=etaminval1;
+      etamax1=etamaxval1;
+      etamin2=etaminval2;
+      etamax2=etamaxval2;
+      sumsin=0;
+      sumcos=0;
+      sumsinNoWgt=0;
+      sumcosNoWgt=0;
 
       mult = 0;
-      order = (double)orderval;
+      order = (double) orderval;
     }
-    ~GenPlane() { ; }
+    ~GenPlane(){;}
     void addParticle(double w, double PtOrEt, double s, double c, double eta) {
-      if ((eta >= etamin1 && eta < etamax1) || (etamin2 != etamax2 && eta >= etamin2 && eta < etamax2)) {
-        sumsin += w * s;
-        sumcos += w * c;
-        sumsinNoWgt += s;
-        sumcosNoWgt += c;
+      if((eta>=etamin1 && eta<etamax1) || 
+	 (etamin2!= etamax2 && eta>=etamin2 && eta<etamax2 )) {
+	sumsin+=w*s;
+	sumcos+=w*c;
+	sumsinNoWgt+=s;
+	sumcosNoWgt+=c;
 
-        sumw += fabs(w);
-        sumw2 += w * w;
-        sumPtOrEt += PtOrEt;
-        sumPtOrEt2 += PtOrEt * PtOrEt;
-        ++mult;
+	sumw+=fabs(w);
+	sumw2+=w*w;
+	sumPtOrEt+=PtOrEt;
+	sumPtOrEt2+=PtOrEt*PtOrEt;
+	++mult;
       }
     }
 
-    double getAngle(double &ang,
-                    double &sv,
-                    double &cv,
-                    double &svNoWgt,
-                    double &cvNoWgt,
-                    double &w,
-                    double &w2,
-                    double &PtOrEt,
-                    double &PtOrEt2,
-                    uint &epmult) {
+    double getAngle(double &ang, double &sv, double &cv, double &svNoWgt, double &cvNoWgt,  double &w, double &w2, double &PtOrEt, double &PtOrEt2, uint &epmult){
       ang = -10;
       sv = 0;
       cv = 0;
@@ -127,14 +122,13 @@ namespace hi {
       PtOrEt = sumPtOrEt;
       PtOrEt2 = sumPtOrEt2;
       epmult = mult;
-      double q = sv * sv + cv * cv;
-      if (q > 0)
-        ang = atan2(sv, cv) / order;
+      double q = sv*sv+cv*cv;
+      if(q>0) ang = atan2(sv,cv)/order;
       return ang;
     }
     void reset() {
-      sumsin = 0;
-      sumcos = 0;
+      sumsin=0;
+      sumcos=0;
       sumsinNoWgt = 0;
       sumcosNoWgt = 0;
       sumw = 0;
@@ -143,8 +137,8 @@ namespace hi {
       sumPtOrEt = 0;
       sumPtOrEt2 = 0;
     }
-
   private:
+
     string epname;
     double etamin1;
     double etamax1;
@@ -162,17 +156,18 @@ namespace hi {
     double sumPtOrEt2;
     double order;
   };
-}  // namespace hi
+}
 
 class EvtPlaneProducer : public edm::stream::EDProducer<> {
 public:
-  explicit EvtPlaneProducer(const edm::ParameterSet &);
+  explicit EvtPlaneProducer(const edm::ParameterSet&);
   ~EvtPlaneProducer() override;
 
 private:
   GenPlane *rp[NumEPNames];
+  EPCuts * cuts;
 
-  void produce(edm::Event &, const edm::EventSetup &) override;
+  void produce(edm::Event&, const edm::EventSetup&) override;
 
   // ----------member data ---------------------------
 
@@ -197,10 +192,18 @@ private:
 
   edm::InputTag trackTag_;
   edm::EDGetTokenT<reco::TrackCollection> trackToken;
+  edm::InputTag losttrackTag_;
+  edm::EDGetTokenT<reco::TrackCollection> losttrackToken;
   edm::Handle<reco::TrackCollection> trackCollection_;
+  string strack;
+  edm::EDGetTokenT<pat::PackedCandidateCollection> packedToken;
+  edm::EDGetTokenT<pat::PackedCandidateCollection> lostToken;
 
-  edm::ESWatcher<HeavyIonRcd> hiWatcher;
-  edm::ESWatcher<HeavyIonRPRcd> hirpWatcher;
+  edm::InputTag chi2MapTag_;
+  edm::EDGetTokenT<edm::ValueMap<float>> chi2MapToken;
+  edm::InputTag chi2MapLostTag_;
+  edm::EDGetTokenT<edm::ValueMap<float>> chi2MapLostToken;
+  std::vector< float > trkNormChi2;
 
   bool loadDB_;
   double minet_;
@@ -209,333 +212,429 @@ private:
   double maxpt_;
   double minvtx_;
   double maxvtx_;
+  int flatnvtxbins_;
+  double flatminvtx_;
+  double flatdelvtx_;
+  double dzdzerror_;
+  double d0d0error_;
+  double pterror_;
+  double chi2perlayer_;
   double dzerr_;
+  double dzdzerror_pix_;
   double chi2_;
+  int nhitsValid_;
   int FlatOrder_;
   int NumFlatBins_;
   double nCentBins_;
   double caloCentRef_;
   double caloCentRefWidth_;
   int CentBinCompression_;
-  HiEvtPlaneFlatten *flat[NumEPNames];
+  int cutEra_;
+  HiEvtPlaneFlatten * flat[NumEPNames];
+  int evtCount;  
+  TrackStructure track;
+  int pcnt = 0;
+
+  edm::ESWatcher<HeavyIonRcd> hiWatcher;
+  edm::ESWatcher<HeavyIonRPRcd> hirpWatcher;
+  
+
+  void FillHF(TrackStructure track, double vz, int bin){
+    double minet = minet_;
+    double maxet = maxet_;
+    for(int i = 0; i<NumEPNames; i++) {
+      if(EPDet[i]!=HF) continue;
+      if(minet_<0) minet = minTransverse[i];
+      if(maxet_<0) maxet = maxTransverse[i];
+      if(track.et<minet) continue;
+      if(track.et>maxet) continue;
+      if(EPEtaMin2[i]==EPEtaMax2[i]) {
+	if( track.eta < EPEtaMin1[i] ) continue;
+	if( track.eta > EPEtaMax1[i] ) continue;
+      } else {
+	if( track.eta < EPEtaMin1[i] ) continue;
+	if( track.eta > EPEtaMax2[i] ) continue;
+	if( track.eta > EPEtaMax1[i] && track.eta < EPEtaMin2[i] ) continue;
+      }
+      double w = track.et;
+      if(loadDB_) w = track.et*flat[i]->getEtScale(vz,bin);
+      if(EPOrder[i]==1 ) {
+	if(MomConsWeight[i][0]=='y' && loadDB_ ) {
+	  w = flat[i]->getW(track.et, vz, bin);
+	}
+	//if(track.eta<0 ) w=-w;
+      }
+      rp[i]->addParticle(w,track.et,sin(EPOrder[i]*track.phi),cos(EPOrder[i]*track.phi),track.eta);
+      
+    }
+  };
+    
+  void FillCastor(TrackStructure track, double vz, int bin){
+    double minet = minet_;
+    double maxet = maxet_;
+    for(int i = 0; i<NumEPNames; i++) {
+      if(EPDet[i]==Castor) {
+	if(minet_<0) minet = minTransverse[i];
+	if(maxet_<0) maxet = maxTransverse[i];
+	if(track.et<minet) continue;
+	if(track.et>maxet) continue;
+	if(EPEtaMin2[i]==EPEtaMax2[i]) {
+	  if( track.eta < EPEtaMin1[i] ) continue;
+	  if( track.eta > EPEtaMax1[i] ) continue;
+	} else {
+	  if( track.eta < EPEtaMin1[i] ) continue;
+	  if( track.eta > EPEtaMax2[i] ) continue;
+	  if( track.eta > EPEtaMax1[i] && track.eta < EPEtaMin2[i] ) continue;
+	}
+	double w = track.et;
+	if(EPOrder[i]==1 ) {
+	  if(MomConsWeight[i][0]=='y' && loadDB_ ) {
+	    w = flat[i]->getW(track.et, vz, bin);
+	  }
+	  //if(track.eta<0 ) w=-w;
+	}
+	rp[i]->addParticle(w,track.et,sin(EPOrder[i]*track.phi),cos(EPOrder[i]*track.phi),track.eta);
+      }
+    }
+  }
+
+  void FillTracker(TrackStructure track, double vz, int bin){
+    double minpt = minpt_;
+    double maxpt = maxpt_;
+    for(int i = 0; i<NumEPNames; i++) {
+      if(EPDet[i]==Tracker) {
+	if(minpt_<0) minpt = minTransverse[i];
+	if(maxpt_<0) maxpt = maxTransverse[i];
+	if(track.pt<minpt) continue;
+	if(track.pt>maxpt) continue;
+	if(EPEtaMin2[i]==EPEtaMax2[i]) {
+	  if( track.eta < EPEtaMin1[i] ) continue;
+	  if( track.eta > EPEtaMax1[i] ) continue;
+	} else {
+	  if( track.eta < EPEtaMin1[i] ) continue;
+	  if( track.eta > EPEtaMax2[i] ) continue;
+	  if( track.eta > EPEtaMax1[i] && track.eta < EPEtaMin2[i] ) continue;
+	}
+ 	double w = track.pt;
+	if(w>2.5) w=2.0;   //v2 starts decreasing above ~2.5 GeV/c
+	if(EPOrder[i]==1) {
+	  if(MomConsWeight[i][0]=='y' && loadDB_) {
+	    w = flat[i]->getW(track.pt, vz, bin);
+	  }
+	  //if(track.eta<0) w=-w;
+	}
+	rp[i]->addParticle(w,track.pt,sin(EPOrder[i]*track.phi),cos(EPOrder[i]*track.phi),track.eta);
+      }
+    }
+  };
+
 };
 
-EvtPlaneProducer::EvtPlaneProducer(const edm::ParameterSet &iConfig)
-    : centralityVariable_(iConfig.getParameter<std::string>("centralityVariable")),
-      centralityBinTag_(iConfig.getParameter<edm::InputTag>("centralityBinTag")),
-      vertexTag_(iConfig.getParameter<edm::InputTag>("vertexTag")),
-      caloTag_(iConfig.getParameter<edm::InputTag>("caloTag")),
-      castorTag_(iConfig.getParameter<edm::InputTag>("castorTag")),
-      trackTag_(iConfig.getParameter<edm::InputTag>("trackTag")),
-      loadDB_(iConfig.getParameter<bool>("loadDB")),
-      minet_(iConfig.getParameter<double>("minet")),
-      maxet_(iConfig.getParameter<double>("maxet")),
-      minpt_(iConfig.getParameter<double>("minpt")),
-      maxpt_(iConfig.getParameter<double>("maxpt")),
-      minvtx_(iConfig.getParameter<double>("minvtx")),
-      maxvtx_(iConfig.getParameter<double>("maxvtx")),
-      dzerr_(iConfig.getParameter<double>("dzerr")),
-      chi2_(iConfig.getParameter<double>("chi2")),
-      FlatOrder_(iConfig.getParameter<int>("FlatOrder")),
-      NumFlatBins_(iConfig.getParameter<int>("NumFlatBins")),
-      caloCentRef_(iConfig.getParameter<double>("caloCentRef")),
-      caloCentRefWidth_(iConfig.getParameter<double>("caloCentRefWidth")),
-      CentBinCompression_(iConfig.getParameter<int>("CentBinCompression")) {
+EvtPlaneProducer::EvtPlaneProducer(const edm::ParameterSet& iConfig):
+  centralityVariable_ ( iConfig.getParameter<std::string>("centralityVariable") ),
+  centralityBinTag_ ( iConfig.getParameter<edm::InputTag>("centralityBinTag") ),
+  vertexTag_  ( iConfig.getParameter<edm::InputTag>("vertexTag") ),
+  caloTag_ ( iConfig.getParameter<edm::InputTag>("caloTag") ),
+  castorTag_ ( iConfig.getParameter<edm::InputTag>("castorTag") ),
+  trackTag_ ( iConfig.getParameter<edm::InputTag>("trackTag") ),
+  losttrackTag_ ( iConfig.getParameter<edm::InputTag>("lostTag") ),
+  chi2MapTag_ ( iConfig.getParameter<edm::InputTag>("chi2MapTag") ),
+  chi2MapLostTag_ ( iConfig.getParameter<edm::InputTag>("chi2MapLostTag") ),
+  loadDB_ ( iConfig.getParameter<bool>("loadDB") ),
+  minet_ ( iConfig.getParameter<double>("minet") ),
+  maxet_ ( iConfig.getParameter<double>("maxet") ),
+  minpt_ ( iConfig.getParameter<double>("minpt") ),
+  maxpt_ ( iConfig.getParameter<double>("maxpt") ),
+  minvtx_ ( iConfig.getParameter<double>("minvtx") ),
+  maxvtx_ ( iConfig.getParameter<double>("maxvtx") ),
+  flatnvtxbins_ ( iConfig.getParameter<int>("flatnvtxbins") ),
+  flatminvtx_ ( iConfig.getParameter<double>("flatminvtx") ),
+  flatdelvtx_ ( iConfig.getParameter<double>("flatdelvtx") ),
+  dzdzerror_ (iConfig.getParameter<double>("dzdzerror")),
+  d0d0error_ ( iConfig.getParameter<double>("d0d0error")),
+  pterror_ ( iConfig.getParameter<double>("pterror")),
+  chi2perlayer_  (iConfig.getParameter<double>("chi2perlayer")),
+  dzdzerror_pix_ ( iConfig.getParameter<double>("dzdzerror_pix")) ,
+  chi2_  ( iConfig.getParameter<double>("chi2") ),
+  nhitsValid_ (iConfig.getParameter<int>("nhitsValid") ),
+  FlatOrder_ ( iConfig.getParameter<int>("FlatOrder") ),
+  NumFlatBins_ ( iConfig.getParameter<int>("NumFlatBins") ),
+  caloCentRef_ ( iConfig.getParameter<double>("caloCentRef") ),
+  caloCentRefWidth_ ( iConfig.getParameter<double>("caloCentRefWidth") ),
+  CentBinCompression_ ( iConfig.getParameter<int>("CentBinCompression") ),
+  cutEra_ ( iConfig.getParameter<int>("cutEra") )
+
+{
+  cuts = new EPCuts(cutEra_,pterror_,dzdzerror_,d0d0error_,chi2perlayer_,dzdzerror_pix_,chi2_,nhitsValid_);
   nCentBins_ = 200.;
 
-  if (iConfig.exists("nonDefaultGlauberModel")) {
+  if(iConfig.exists("nonDefaultGlauberModel")){
     centralityMC_ = iConfig.getParameter<std::string>("nonDefaultGlauberModel");
   }
-  centralityLabel_ = centralityVariable_ + centralityMC_;
+  centralityLabel_ = centralityVariable_+centralityMC_;
 
   centralityBinToken = consumes<int>(centralityBinTag_);
 
   vertexToken = consumes<std::vector<reco::Vertex>>(vertexTag_);
 
-  caloToken = consumes<CaloTowerCollection>(caloTag_);
+  strack = trackTag_.label();
+  if(strack.find("packedPFCandidates")!=std::string::npos) {
+    packedToken = consumes<pat::PackedCandidateCollection>(trackTag_);
+    lostToken = consumes<pat::PackedCandidateCollection>(losttrackTag_);
+    chi2MapToken = consumes<edm::ValueMap<float>>(chi2MapTag_);
+    chi2MapLostToken = consumes<edm::ValueMap<float>>(chi2MapLostTag_);
 
-  castorToken = consumes<std::vector<reco::CastorTower>>(castorTag_);
-
-  trackToken = consumes<reco::TrackCollection>(trackTag_);
+  } else {
+    caloToken = consumes<CaloTowerCollection>(caloTag_); 
+    castorToken = consumes<std::vector<reco::CastorTower>>(castorTag_);
+    trackToken = consumes<reco::TrackCollection>(trackTag_);
+  }
 
   produces<reco::EvtPlaneCollection>();
-  for (int i = 0; i < NumEPNames; i++) {
-    rp[i] = new GenPlane(EPNames[i], EPEtaMin1[i], EPEtaMax1[i], EPEtaMin2[i], EPEtaMax2[i], EPOrder[i]);
+  for(int i = 0; i<NumEPNames; i++ ) {
+    rp[i] = new GenPlane(EPNames[i],EPEtaMin1[i],EPEtaMax1[i],EPEtaMin2[i],EPEtaMax2[i],EPOrder[i]);
   }
-  for (int i = 0; i < NumEPNames; i++) {
+  for(int i = 0; i<NumEPNames; i++) {
     flat[i] = new HiEvtPlaneFlatten();
-    flat[i]->init(FlatOrder_, NumFlatBins_, EPNames[i], EPOrder[i]);
+    flat[i]->init(FlatOrder_,NumFlatBins_,flatnvtxbins_,flatminvtx_,flatdelvtx_,EPNames[i],EPOrder[i]);
   }
+
 }
 
-EvtPlaneProducer::~EvtPlaneProducer() {
+
+EvtPlaneProducer::~EvtPlaneProducer()
+{
+
   // do anything here that needs to be done at desctruction time
   // (e.g. close files, deallocate resources etc.)
-  for (int i = 0; i < NumEPNames; i++) {
+  for(int i = 0; i<NumEPNames; i++) {
     delete flat[i];
   }
+
 }
+
 
 //
 // member functions
 //
 
 // ------------ method called to produce the data  ------------
-void EvtPlaneProducer::produce(edm::Event &iEvent, const edm::EventSetup &iSetup) {
+void
+EvtPlaneProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
+{
   using namespace edm;
   using namespace std;
   using namespace reco;
-
-  if (loadDB_ && (hiWatcher.check(iSetup) || hirpWatcher.check(iSetup))) {
+  if( hiWatcher.check(iSetup) ) {
     //
     //Get Size of Centrality Table
     //
     edm::ESHandle<CentralityTable> centDB_;
-    iSetup.get<HeavyIonRcd>().get(centralityLabel_, centDB_);
+    iSetup.get<HeavyIonRcd>().get(centralityLabel_,centDB_);
     nCentBins_ = centDB_->m_table.size();
-    for (int i = 0; i < NumEPNames; i++) {
-      if (caloCentRef_ > 0) {
-        int minbin = (caloCentRef_ - caloCentRefWidth_ / 2.) * nCentBins_ / 100.;
-        int maxbin = (caloCentRef_ + caloCentRefWidth_ / 2.) * nCentBins_ / 100.;
-        minbin /= CentBinCompression_;
-        maxbin /= CentBinCompression_;
-        if (minbin > 0 && maxbin >= minbin) {
-          if (EPDet[i] == HF || EPDet[i] == Castor)
-            flat[i]->setCaloCentRefBins(minbin, maxbin);
-        }
+    for(int i = 0; i<NumEPNames; i++) {
+      if(caloCentRef_>0) {
+	int minbin = (caloCentRef_-caloCentRefWidth_/2.)*nCentBins_/100.;
+	int maxbin = (caloCentRef_+caloCentRefWidth_/2.)*nCentBins_/100.;
+	minbin/=CentBinCompression_;
+	maxbin/=CentBinCompression_;
+	if(minbin>0 && maxbin>=minbin) {
+	  if(EPDet[i]==HF || EPDet[i]==Castor) flat[i]->setCaloCentRefBins(minbin,maxbin);
+	}
       }
     }
-
-    //
-    //Get flattening parameter file.
-    //
-    if (loadDB_) {
-      edm::ESHandle<RPFlatParams> flatparmsDB_;
-      iSetup.get<HeavyIonRPRcd>().get(flatparmsDB_);
-      LoadEPDB db(flatparmsDB_, flat);
-      if (!db.IsSuccess()) {
-        loadDB_ = kFALSE;
-      }
-    }
-
-  }  //rp record change
-
+  }
   //
+  //Get flattening parameter file.  
+  //
+  if( loadDB_ && hirpWatcher.check(iSetup) ) {
+    edm::ESHandle<RPFlatParams> flatparmsDB_;
+    iSetup.get<HeavyIonRPRcd>().get(flatparmsDB_);
+    LoadEPDB db(flatparmsDB_,flat);
+    if(!db.IsSuccess()) {
+      loadDB_ = kFALSE;
+    }
+  } 
+  // 
   //Get Centrality
   //
   int bin = 0;
-  if (loadDB_) {
+  int cbin = 0;
+  if(loadDB_) {
     edm::Handle<int> cbin_;
     iEvent.getByToken(centralityBinToken, cbin_);
-    int cbin = *cbin_;
-    bin = cbin / CentBinCompression_;
+    cbin = *cbin_;
+    bin = cbin/CentBinCompression_;
   }
   //
   //Get Vertex
   //
-  int vs_sell = 0.;
-  float vzr_sell;
-  iEvent.getByToken(vertexToken, vertex_);
-  const reco::VertexCollection *vertices3 = nullptr;
-  if (vertex_.isValid()) {
-    vertices3 = vertex_.product();
-    vs_sell = vertices3->size();
-  }
-  if (vs_sell > 0) {
-    vzr_sell = vertices3->begin()->z();
-  } else
-    vzr_sell = -999.9;
-  //
-  for (int i = 0; i < NumEPNames; i++)
-    rp[i]->reset();
-  if (vzr_sell < minvtx_ or vzr_sell > maxvtx_)
-    return;
+  edm::Handle<reco::VertexCollection> vertices;
+  iEvent.getByToken(vertexToken,vertices);
+  
+  //best vertex
+  double bestvz=-999.9, bestvx=-999.9, bestvy=-999.9;
+  double bestvzError=-999.9, bestvxError=-999.9, bestvyError=-999.9;
+  const reco::Vertex & vtx = (*vertices)[0];
+  bestvz = vtx.z(); bestvx = vtx.x(); bestvy = vtx.y();
+  bestvzError = vtx.zError(); bestvxError = vtx.xError(); bestvyError = vtx.yError();
+  math::XYZPoint bestvtx(bestvx,bestvy,bestvz);
+  if(bestvz<minvtx_ || bestvz>maxvtx_) return;
 
-  //calorimetry part
 
-  double tower_eta, tower_phi;
-  double tower_energyet, tower_energyet_e, tower_energyet_h;
-
-  iEvent.getByToken(caloToken, caloCollection_);
-
-  if (caloCollection_.isValid()) {
-    for (CaloTowerCollection::const_iterator j = caloCollection_->begin(); j != caloCollection_->end(); j++) {
-      tower_eta = j->eta();
-      tower_phi = j->phi();
-      tower_energyet_e = j->emEt();
-      tower_energyet_h = j->hadEt();
-      tower_energyet = tower_energyet_e + tower_energyet_h;
-      double minet = minet_;
-      double maxet = maxet_;
-      for (int i = 0; i < NumEPNames; i++) {
-        if (minet_ < 0)
-          minet = minTransverse[i];
-        if (maxet_ < 0)
-          maxet = maxTransverse[i];
-        if (tower_energyet < minet)
-          continue;
-        if (tower_energyet > maxet)
-          continue;
-        if (EPDet[i] == HF) {
-          double w = tower_energyet;
-          if (loadDB_)
-            w = tower_energyet * flat[i]->getEtScale(vzr_sell, bin);
-          if (EPOrder[i] == 1) {
-            if (MomConsWeight[i][0] == 'y' && loadDB_) {
-              w = flat[i]->getW(tower_energyet, vzr_sell, bin);
-            }
-            if (tower_eta < 0)
-              w = -w;
-          }
-          rp[i]->addParticle(w, tower_energyet, sin(EPOrder[i] * tower_phi), cos(EPOrder[i] * tower_phi), tower_eta);
-        }
+  for(int i = 0; i<NumEPNames; i++) rp[i]->reset();
+  if(bestvz < minvtx_ or bestvz > maxvtx_) return;
+  edm::Handle<edm::ValueMap<float>> chi2Map;
+  
+  if(strack.find("packedPFCandidates")!=std::string::npos) {
+    auto const cands = iEvent.getHandle(packedToken);
+    iEvent.getByToken(chi2MapToken, chi2Map);
+    for(unsigned int i = 0, n=cands->size(); i<n; ++i){
+      track = {};
+      track.centbin = cbin;
+      const auto &pf = pat::PackedCandidateRef(cands,i);
+      track.et             = pf->et();
+      track.eta            = pf->eta();
+      track.phi            = pf->phi();
+      track.pdgid          = pf->pdgId();
+      if(cuts->isGoodHF(track)) {
+	FillHF(track,bestvz,bin);
+      }
+      if(!pf->hasTrackDetails()) continue;
+      const reco::Track trk  = (reco::Track) pf->pseudoTrack();
+      track.highPurity     = pf->trackHighPurity();
+      track.charge         = trk.charge(); 
+      if(!track.highPurity || track.charge==0) continue;
+      track.collection     = 1;
+      track.eta            = trk.eta();
+      track.phi            = trk.phi();
+      track.pt             = trk.pt();
+      track.ptError        = trk.ptError();
+      track.numberOfValidHits = trk.numberOfValidHits();
+      track.algos          = trk.algo();
+      track.dz             = trk.dz(bestvtx);
+      track.dxy            = -1.*trk.dxy(bestvtx);
+      track.dzError        = sqrt(pow(trk.dzError(),2) + pow(bestvzError,2));
+      track.dxyError       = sqrt(pow(trk.dxyError(),2)+bestvxError*bestvyError);
+      track.dzSig          = track.dz/track.dzError;
+      track.dxySig         = track.dxy/track.dxyError;
+      const reco::HitPattern& hit_pattern = trk.hitPattern();
+      track.normalizedChi2 = (*chi2Map).get(i);
+      track.chi2layer = (*chi2Map).get(i)/hit_pattern.trackerLayersWithMeasurement();
+      if (cuts->isGoodTrack(track)) {
+	FillTracker(track,bestvz,bin);
+      }	    
+    }    
+    auto const trks = iEvent.getHandle(lostToken);
+    iEvent.getByToken(chi2MapLostToken, chi2Map);
+    for(unsigned int i = 0, n=trks->size(); i<n; ++i){
+      track = {};
+      track.centbin = cbin;
+      const auto &pf = pat::PackedCandidateRef(trks,i);
+      if(!pf->hasTrackDetails()) continue;
+      const reco::Track trk  = (reco::Track) pf->pseudoTrack();
+      track.highPurity     = pf->trackHighPurity();
+      track.charge         = trk.charge();
+      if(!track.highPurity || track.charge==0) continue;
+      track.collection     = 2;
+      track.eta            = pf->eta();
+      track.phi            = pf->phi();
+      track.et             = pf->et();
+      track.pdgid          = pf->pdgId();
+      track.pt             = trk.pt();            
+      track.ptError        = trk.ptError();
+      track.numberOfValidHits           = trk.numberOfValidHits();
+      track.algos           = trk.algo();
+      track.dz             = trk.dz(bestvtx);
+      track.dxy            = -1.*trk.dxy(bestvtx);
+      track.dzError        = sqrt(pow(trk.dzError(),2) + pow(bestvzError,2));
+      track.dxyError       = sqrt(pow(trk.dxyError(),2)+bestvxError*bestvyError);
+      track.dzSig          = track.dz/track.dzError;
+      track.dxySig         = track.dxy/track.dxyError;
+      const reco::HitPattern& hit_pattern = trk.hitPattern();
+      track.normalizedChi2 = (*chi2Map).get(i);
+      track.chi2layer = (*chi2Map).get(i)/hit_pattern.trackerLayersWithMeasurement();
+      if (cuts->isGoodTrack(track)) {
+	FillTracker(track,bestvz,bin);
+      }	    
+    }    
+   
+  } else {
+    
+    //calorimetry part        
+    iEvent.getByToken(caloToken,caloCollection_);
+    if(caloCollection_.isValid()){
+      for (CaloTowerCollection::const_iterator j = caloCollection_->begin();j !=caloCollection_->end(); j++) {
+	track.eta          = j->eta();
+	track.phi          = j->phi();
+	track.et     = j->emEt() + j->hadEt();
+	track.pdgid = 1;
+	if(cuts->isGoodHF(track)) FillHF(track,bestvz,bin);
+      }
+    }
+    
+    //Castor part    
+    iEvent.getByToken(castorToken,castorCollection_);    
+    if(castorCollection_.isValid()){
+      for (std::vector<reco::CastorTower>::const_iterator j = castorCollection_->begin();j !=castorCollection_->end(); j++) {
+       	track.eta        = j->eta();
+       	track.phi        = j->phi();
+       	track.et         = j->et();
+	track.pdgid = 1;
+	if(cuts->isGoodCastor(track)) FillCastor(track,bestvz,bin);
+      }     
+    }
+    //Tracking part
+    iEvent.getByToken(trackToken, trackCollection_);
+    if(trackCollection_.isValid()){
+      for(reco::TrackCollection::const_iterator j = trackCollection_->begin(); j != trackCollection_->end(); j++){
+	track.highPurity= j->quality(reco::TrackBase::highPurity);
+	track.charge    = j->charge();
+	if(!track.highPurity || track.charge==0) continue;
+	track.centbin   = cbin;
+	track.collection=0;
+	track.eta       = j->eta();
+	track.phi       = j->phi();
+	track.pt        = j->pt();
+	track.ptError   = j->ptError();
+	track.numberOfValidHits      = j->numberOfValidHits();
+	track.algos      = j->algo();
+	track.dz        = j->dz(bestvtx);
+	track.dxy       = -1.*j->dxy(bestvtx);
+	track.dzError   = sqrt(pow(j->dzError(),2) + pow(bestvzError,2));
+	track.dxyError  = sqrt(pow(j->d0Error(),2) + bestvxError*bestvyError);
+	track.dzSig     = track.dz/track.dzError;
+	track.dxySig    = track.dxy/track.dxyError;
+	track.normalizedChi2 = j->normalizedChi2();
+	track.chi2layer = track.normalizedChi2/j->hitPattern().trackerLayersWithMeasurement();
+	
+	if(cuts->isGoodTrack(track)) FillTracker(track,bestvz,bin);
       }
     }
   }
+ 
+    auto evtplaneOutput = std::make_unique<EvtPlaneCollection>();
 
-  //Castor part
+    double ang=-10;
+    double sv = 0;
+    double cv = 0;
+    double svNoWgt = 0;
+    double cvNoWgt = 0;
 
-  iEvent.getByToken(castorToken, castorCollection_);
+    double wv = 0;
+    double wv2 = 0;
+    double pe = 0;
+    double pe2 = 0;
+    uint epmult = 0;
 
-  if (castorCollection_.isValid()) {
-    for (std::vector<reco::CastorTower>::const_iterator j = castorCollection_->begin(); j != castorCollection_->end();
-         j++) {
-      tower_eta = j->eta();
-      tower_phi = j->phi();
-      tower_energyet = j->et();
-      double minet = minet_;
-      double maxet = maxet_;
-      for (int i = 0; i < NumEPNames; i++) {
-        if (EPDet[i] == Castor) {
-          if (minet_ < 0)
-            minet = minTransverse[i];
-          if (maxet_ < 0)
-            maxet = maxTransverse[i];
-          if (tower_energyet < minet)
-            continue;
-          if (tower_energyet > maxet)
-            continue;
-          double w = tower_energyet;
-          if (EPOrder[i] == 1) {
-            if (MomConsWeight[i][0] == 'y' && loadDB_) {
-              w = flat[i]->getW(tower_energyet, vzr_sell, bin);
-            }
-            if (tower_eta < 0)
-              w = -w;
-          }
-          rp[i]->addParticle(w, tower_energyet, sin(EPOrder[i] * tower_phi), cos(EPOrder[i] * tower_phi), tower_eta);
-        }
-      }
+    for(int i = 0; i<NumEPNames; i++) {
+      rp[i]->getAngle(ang,sv,cv,svNoWgt, cvNoWgt, wv,wv2,pe,pe2,epmult);
+      evtplaneOutput->push_back( EvtPlane(i,0,ang,sv,cv,wv,wv2,pe,pe2,epmult) );
+      evtplaneOutput->back().addLevel(3, 0., svNoWgt, cvNoWgt);
     }
-  }
-
-  //Tracking part
-
-  double track_eta;
-  double track_phi;
-  double track_pt;
-
-  double vzErr2 = 0.0, vxyErr = 0.0;
-  math::XYZPoint vtxPoint(0.0, 0.0, 0.0);
-  if (vertex_.isValid() && !vertex_->empty()) {
-    vtxPoint = vertex_->begin()->position();
-    vzErr2 = (vertex_->begin()->zError()) * (vertex_->begin()->zError());
-    vxyErr = vertex_->begin()->xError() * vertex_->begin()->yError();
-  }
-
-  iEvent.getByToken(trackToken, trackCollection_);
-  if (trackCollection_.isValid()) {
-    for (reco::TrackCollection::const_iterator j = trackCollection_->begin(); j != trackCollection_->end(); j++) {
-      bool accepted = true;
-      bool isPixel = false;
-      // determine if the track is a pixel track
-      if (j->numberOfValidHits() < 7)
-        isPixel = true;
-
-      // determine the vertex significance
-      double d0 = 0.0, dz = 0.0, d0sigma = 0.0, dzsigma = 0.0;
-      d0 = -1. * j->dxy(vtxPoint);
-      dz = j->dz(vtxPoint);
-      d0sigma = sqrt(j->d0Error() * j->d0Error() + vxyErr);
-      dzsigma = sqrt(j->dzError() * j->dzError() + vzErr2);
-
-      // cuts for pixel tracks
-      if (isPixel) {
-        // dz significance cut
-        if (fabs(dz / dzsigma) > dzerr_)
-          accepted = false;
-        // chi2/ndof cut
-        if (j->normalizedChi2() > chi2_)
-          accepted = false;
-      }
-      // cuts for full tracks
-      if (!isPixel) {
-        // dz and d0 significance cuts
-        if (fabs(dz / dzsigma) > 3)
-          accepted = false;
-        if (fabs(d0 / d0sigma) > 3)
-          accepted = false;
-        // pt resolution cut
-        if (j->ptError() / j->pt() > 0.1)
-          accepted = false;
-        // number of valid hits cut
-        if (j->numberOfValidHits() < 12)
-          accepted = false;
-      }
-      if (accepted) {
-        track_eta = j->eta();
-        track_phi = j->phi();
-        track_pt = j->pt();
-        double minpt = minpt_;
-        double maxpt = maxpt_;
-        for (int i = 0; i < NumEPNames; i++) {
-          if (minpt_ < 0)
-            minpt = minTransverse[i];
-          if (maxpt_ < 0)
-            maxpt = maxTransverse[i];
-          if (track_pt < minpt)
-            continue;
-          if (track_pt > maxpt)
-            continue;
-          if (EPDet[i] == Tracker) {
-            double w = track_pt;
-            if (w > 2.5)
-              w = 2.0;  //v2 starts decreasing above ~2.5 GeV/c
-            if (EPOrder[i] == 1) {
-              if (MomConsWeight[i][0] == 'y' && loadDB_) {
-                w = flat[i]->getW(track_pt, vzr_sell, bin);
-              }
-              if (track_eta < 0)
-                w = -w;
-            }
-            rp[i]->addParticle(w, track_pt, sin(EPOrder[i] * track_phi), cos(EPOrder[i] * track_phi), track_eta);
-          }
-        }
-      }
-    }  //end for
-  }
-
-  auto evtplaneOutput = std::make_unique<EvtPlaneCollection>();
-
-  double ang = -10;
-  double sv = 0;
-  double cv = 0;
-  double svNoWgt = 0;
-  double cvNoWgt = 0;
-
-  double wv = 0;
-  double wv2 = 0;
-  double pe = 0;
-  double pe2 = 0;
-  uint epmult = 0;
-
-  for (int i = 0; i < NumEPNames; i++) {
-    rp[i]->getAngle(ang, sv, cv, svNoWgt, cvNoWgt, wv, wv2, pe, pe2, epmult);
-    evtplaneOutput->push_back(EvtPlane(i, 0, ang, sv, cv, wv, wv2, pe, pe2, epmult));
-    evtplaneOutput->back().addLevel(3, 0., svNoWgt, cvNoWgt);
-  }
-
-  iEvent.put(std::move(evtplaneOutput));
+    
+    iEvent.put(std::move(evtplaneOutput));
+    ++pcnt;
 }
 
 //define this as a plug-in

@@ -1,6 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
-hiEvtPlane = cms.EDProducer("EvtPlaneProducer",
+evtPlaneCalibTree = cms.EDAnalyzer("EvtPlaneCalibTree",
+                            inputPlanesTag = cms.InputTag("hiEvtPlane",""),
                             centralityVariable = cms.string("HFtowers"),
                             centralityBinTag = cms.InputTag("centralityBin","HFtowers"),
                             vertexTag = cms.InputTag("offlinePrimaryVertices"),
@@ -33,5 +34,13 @@ hiEvtPlane = cms.EDProducer("EvtPlaneProducer",
                             caloCentRef = cms.double(-1),
                             caloCentRefWidth = cms.double(-1),
                             CentBinCompression = cms.int32(5),
-                            cutEra = cms.int32(0) # 0:ppReco, 1:HIReco, 2:Pixel, 3: GenMC
+                            cutEra = cms.int32(0), # 0:ppReco, 1:HIReco, 2:Pixel, 3: GenMC
+                            chi2Map = cms.InputTag("packedPFCandidateTrackChi2"),
+                            chi2MapLost = cms.InputTag("lostTrackChi2"),
                             )
+                            
+
+
+
+
+    

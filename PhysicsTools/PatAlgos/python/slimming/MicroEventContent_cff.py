@@ -137,7 +137,10 @@ _pp_on_AA_extraCommands = [
     'keep patPackedCandidates_hiPixelTracks_*_*',
 	  'keep *_packedCandidateMuonID_*_*',
 	  'keep floatedmValueMap_packedPFCandidateTrackChi2_*_*',
-	  'keep floatedmValueMap_lostTrackChi2_*_*'
+	  'keep floatedmValueMap_lostTrackChi2_*_*',
+	  'keep *_centralityBin_*_*',
+	  'keep *_hiEvtPlane_*_*',
+	  'keep *_hiEvtPlaneFlat_*_*'
 ]
 from Configuration.Eras.Modifier_pp_on_AA_2018_cff import pp_on_AA_2018
 from Configuration.Eras.Modifier_pp_on_PbPb_run3_cff import pp_on_PbPb_run3
