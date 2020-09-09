@@ -61,7 +61,6 @@ Implementation:
 #include "DataFormats/Common/interface/Ref.h"
 #include "DataFormats/Common/interface/RefVector.h"
 
-#include "HeavyIonsAnalysis/JetAnalysis/interface/HiPFCandAnalyzer.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 #include "RecoHI/HiEvtPlaneAlgos/interface/HiEvtPlaneFlatten.h"
@@ -194,7 +193,7 @@ private:
   edm::InputTag caloTag_;
   edm::EDGetTokenT<CaloTowerCollection> caloToken;
   edm::Handle<CaloTowerCollection> caloCollection_;
-  edm::EDGetTokenT<edm::View<pat::PackedCandidate>> caloTokenPF;
+  edm::EDGetTokenT<reco::PFCandidateCollection> caloTokenPF;
 
   edm::InputTag castorTag_;
   edm::EDGetTokenT<std::vector<reco::CastorTower>> castorToken;
@@ -443,7 +442,7 @@ EvtPlaneProducer::EvtPlaneProducer(const edm::ParameterSet &iConfig)
 
   } else {
     if(scalo.find("particleFlow") != std::string::npos) {
-      caloTokenPF = consumes<edm::View<reco::PFCandidateCollection>>(caloTag_);
+      caloTokenPF = consumes<reco::PFCandidateCollection>(caloTag_);
     } else {	    
       caloToken = consumes<CaloTowerCollection>(caloTag_);
     }
@@ -542,7 +541,7 @@ void EvtPlaneProducer::produce(edm::Event &iEvent, const edm::EventSetup &iSetup
     rp[i]->reset();
   edm::Handle<edm::ValueMap<float>> chi2Map;
   edm::Handle<edm::View<pat::PackedCandidate>> cands;
-
+  edm::Handle<reco::PFCandidateCollection> calocands;
   if (strack.find("packedPFCandidates") != std::string::npos) {
     iEvent.getByToken(packedToken, cands);
     iEvent.getByToken(chi2MapToken, chi2Map);
@@ -626,13 +625,13 @@ void EvtPlaneProducer::produce(edm::Event &iEvent, const edm::EventSetup &iSetup
 
   } else {
     //calorimetry part
-    if(scalo.find("packedPFCandidates") != std::string::npos) {
-      iEvent.getByToken(caloTokenPF, cands);
-      //if(cands.isValid()) {
-        for (unsigned int i = 0, n = cands->size(); i < n; ++i) {
+    if(scalo.find("particleFlow") != std::string::npos) {
+      iEvent.getByToken(caloTokenPF, calocands);
+      if(cands.isValid()) {
+        for (unsigned int i = 0, n = calocands->size(); i < n; ++i) {
           track = {};
           track.centbin = cbin;
-          const pat::PackedCandidate &pf = (*cands)[i];
+          const reco::PFCandidate &pf = (*calocands)[i];
           track.et = pf.et();
           track.eta = pf.eta();
           track.phi = pf.phi();
@@ -641,7 +640,7 @@ void EvtPlaneProducer::produce(edm::Event &iEvent, const edm::EventSetup &iSetup
             FillHF(track, bestvz, bin);
           }
         }	
-      //}
+      }
     } else {
       iEvent.getByToken(caloToken, caloCollection_);
       if (caloCollection_.isValid()) {
