@@ -22,7 +22,6 @@ Implementation:
 #include <ctime>
 #include <cmath>
 #include <cstdlib>
-
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
@@ -62,6 +61,8 @@ Implementation:
 #include "DataFormats/Common/interface/Ref.h"
 #include "DataFormats/Common/interface/RefVector.h"
 
+#include "HeavyIonsAnalysis/JetAnalysis/interface/HiPFCandAnalyzer.h"
+#include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 #include "RecoHI/HiEvtPlaneAlgos/interface/HiEvtPlaneFlatten.h"
 #include "RecoHI/HiEvtPlaneAlgos/interface/LoadEPDB.h"
@@ -193,6 +194,7 @@ private:
   edm::InputTag caloTag_;
   edm::EDGetTokenT<CaloTowerCollection> caloToken;
   edm::Handle<CaloTowerCollection> caloCollection_;
+  edm::EDGetTokenT<edm::View<pat::PackedCandidate>> caloTokenPF;
 
   edm::InputTag castorTag_;
   edm::EDGetTokenT<std::vector<reco::CastorTower>> castorToken;
@@ -204,6 +206,7 @@ private:
   edm::EDGetTokenT<reco::TrackCollection> losttrackToken;
   edm::Handle<reco::TrackCollection> trackCollection_;
   string strack;
+  string scalo;
   edm::EDGetTokenT<edm::View<pat::PackedCandidate>> packedToken;
   edm::EDGetTokenT<edm::View<pat::PackedCandidate>> lostToken;
 
@@ -421,7 +424,6 @@ EvtPlaneProducer::EvtPlaneProducer(const edm::ParameterSet &iConfig)
       cuts = nullptr;
   }
   nCentBins_ = 200.;
-
   if (iConfig.exists("nonDefaultGlauberModel")) {
     centralityMC_ = iConfig.getParameter<std::string>("nonDefaultGlauberModel");
   }
@@ -432,6 +434,7 @@ EvtPlaneProducer::EvtPlaneProducer(const edm::ParameterSet &iConfig)
   vertexToken = consumes<std::vector<reco::Vertex>>(vertexTag_);
 
   strack = trackTag_.label();
+  scalo = caloTag_.label();
   if (strack.find("packedPFCandidates") != std::string::npos) {
     packedToken = consumes<edm::View<pat::PackedCandidate>>(trackTag_);
     lostToken = consumes<edm::View<pat::PackedCandidate>>(losttrackTag_);
@@ -439,7 +442,11 @@ EvtPlaneProducer::EvtPlaneProducer(const edm::ParameterSet &iConfig)
     chi2MapLostToken = consumes<edm::ValueMap<float>>(chi2MapLostTag_);
 
   } else {
-    caloToken = consumes<CaloTowerCollection>(caloTag_);
+    if(scalo.find("particleFlow") != std::string::npos) {
+      caloTokenPF = consumes<edm::View<reco::PFCandidateCollection>>(caloTag_);
+    } else {	    
+      caloToken = consumes<CaloTowerCollection>(caloTag_);
+    }
     castorToken = consumes<std::vector<reco::CastorTower>>(castorTag_);
     trackToken = consumes<reco::TrackCollection>(trackTag_);
   }
@@ -619,18 +626,35 @@ void EvtPlaneProducer::produce(edm::Event &iEvent, const edm::EventSetup &iSetup
 
   } else {
     //calorimetry part
-    iEvent.getByToken(caloToken, caloCollection_);
-    if (caloCollection_.isValid()) {
-      for (CaloTowerCollection::const_iterator j = caloCollection_->begin(); j != caloCollection_->end(); j++) {
-        track.eta = j->eta();
-        track.phi = j->phi();
-        track.et = j->emEt() + j->hadEt();
-        track.pdgid = 1;
-        if (cuts->isGoodHF(track))
-          FillHF(track, bestvz, bin);
+    if(scalo.find("packedPFCandidates") != std::string::npos) {
+      iEvent.getByToken(caloTokenPF, cands);
+      //if(cands.isValid()) {
+        for (unsigned int i = 0, n = cands->size(); i < n; ++i) {
+          track = {};
+          track.centbin = cbin;
+          const pat::PackedCandidate &pf = (*cands)[i];
+          track.et = pf.et();
+          track.eta = pf.eta();
+          track.phi = pf.phi();
+          track.pdgid = pf.pdgId();
+          if (cuts->isGoodHF(track)) {
+            FillHF(track, bestvz, bin);
+          }
+        }	
+      //}
+    } else {
+      iEvent.getByToken(caloToken, caloCollection_);
+      if (caloCollection_.isValid()) {
+        for (CaloTowerCollection::const_iterator j = caloCollection_->begin(); j != caloCollection_->end(); j++) {
+          track.eta = j->eta();
+          track.phi = j->phi();
+          track.et = j->emEt() + j->hadEt();
+          track.pdgid = 1;
+          if (cuts->isGoodHF(track))
+            FillHF(track, bestvz, bin);
+        }
       }
     }
-
     //Castor part
     iEvent.getByToken(castorToken, castorCollection_);
     if (castorCollection_.isValid()) {
